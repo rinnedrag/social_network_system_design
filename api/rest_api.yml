@@ -2,16 +2,10 @@ openapi: 3.0.3
 info:
   title: Swagger Petstore - OpenAPI 3.0
   description: |-
-    This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
-    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
-    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
-    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
-
-    _If you're looking for the Swagger 2.0/OAS 2.0 version of Petstore, then click [here](https://editor.swagger.io/?url=https://petstore.swagger.io/v2/swagger.yaml). Alternatively, you can load via the `Edit > Load Petstore OAS 2.0` menu option!_
-    
-    Some useful links:
-    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
-    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
+   Ещё надо описать подписка на аккаунты других пользователей
+   поиск постов по геолокации (с возможностью искать отдельно по стране или городу) и упорядоченный вывод по популярности (от постов с наибольшим количеством лайков к меньшим) по выбранной геолокации
+   поддержка личных чатов между пользователями без отправки медиа-файлов,
+   отображение и редактирование профиля пользователя
   termsOfService: http://swagger.io/terms/
   contact:
     email: apiteam@swagger.io
@@ -39,6 +33,87 @@ tags:
     description: Operations about user
 paths:
   /posts:
+    get:
+      tags:
+        - posts
+      summary: Получить ленту новостей
+      description: Получить ленту новостей
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Количество комментариев, которые нужно вернуть за запрос.
+          schema: 
+            type: integer
+            maximum: 100
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Курсор, с которого взять следующую пачку данных. Если не указан, берутся данные из начала списка.
+          schema: 
+            type: integer  
+      responses:
+        '200':
+          description: Successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 8564
+                            name:
+                              type: string
+                              example: Maria
+                            avatarUrl:
+                              type: string
+                              example: https://travelsocialmedia.ru/img1.webm
+                        post:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                              description: Идентификатор поста
+                            description:
+                              type: string
+                              example:  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla tincidunt orci quis ante gravida ultrices. Fusce suscipit mattis odio, ut.
+                              description: Описание поста
+                            photoUrls:
+                              type: array
+                              items:
+                                type: string
+                                example: https://travelsocialmedia.ru/img1.webm
+                                description: Отсортированный массив ссылок на фотографии, прикреплённые к посту. Подгружается фронтом.
+                            likeCnt:
+                              type: integer
+                              example: 10
+                              description: Общее количество отметок "Нравится". С учётом пользовательского, если имеется.
+                            likedByUser:
+                              type: bool
+                              description: Флаг, чтобы сообщить пользователю, что он выставил или нет отметку "Нравится" посту.
+                  cursor:
+                    type: string
+                    format: uuid
+                    description: Курсор, с которого взять следующую пачку данных
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '404':
+          description: Not found
+        '500':
+          description: Internal Server Error
     post:
       tags:
         - posts
