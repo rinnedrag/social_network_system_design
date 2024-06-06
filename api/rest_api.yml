@@ -1,1 +1,343 @@
+openapi: 3.0.3
+info:
+  title: Swagger Petstore - OpenAPI 3.0
+  description: |-
+    This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
+    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
+    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
 
+    _If you're looking for the Swagger 2.0/OAS 2.0 version of Petstore, then click [here](https://editor.swagger.io/?url=https://petstore.swagger.io/v2/swagger.yaml). Alternatively, you can load via the `Edit > Load Petstore OAS 2.0` menu option!_
+    
+    Some useful links:
+    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
+    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.11
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: https://travelsocialmedia.ru/api/v1
+tags:
+  - name: posts
+    description: Everything about your Pets
+    externalDocs:
+      description: Find out more
+      url: http://swagger.io
+  - name: subscriptions
+    description: Access to Petstore orders
+    externalDocs:
+      description: Find out more about our store
+      url: http://swagger.io
+  - name: user
+    description: Operations about user
+paths:
+  /posts:
+    post:
+      tags:
+        - posts
+      summary: Опубликовать новый пост
+      description: Опубликовать новый пост
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - description
+              - files
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: Описание поста
+                  minLength: 3
+                  maxLength: 2000
+                location:
+                  type: object
+                  description: Геометка
+                  nullable: true
+                  properties:
+                    lat:
+                      type: number
+                      format: float
+                      description: Широта
+                      example: 10.12
+                    lon:
+                      type: number
+                      format: float
+                      description: Долгота
+                      example: 10.12                      
+                files:
+                  type: array
+                  description: Фотографии
+                  minItems: 1
+                  maxItems: 10
+                  items:
+                    type: object
+                    properties:
+                      order:
+                        type: integer
+                        description: Порядковый номер фотографии
+                      payload:  
+                        type: string
+                        description: Загружаемая фотография в base64
+                        format: binary
+                        maxLength: 3000000
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '500':
+          description: Internal Server Error
+  /posts/{id}/like:
+    post:
+      tags:
+        - posts
+      summary: Поставить посту отметку "Нравится"
+      description: Поставить посту отметку "Нравится"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Successfully created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '404':
+          description: Not found
+        '500':
+          description: Internal Server Error
+    delete:
+      tags:
+        - posts
+      summary: Снять с поста отметку "Нравится"
+      description: Снять с поста отметку "Нравится"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Successfully deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '404':
+          description: Not found
+        '500':
+          description: Internal Server Error
+  /posts/{id}/comments:
+    post:
+      tags:
+        - posts
+      summary: Создать комментарий под постом
+      description: Создать комментарий под постом
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  minLength: 3
+                  maxLength: 2000
+                  description: Содержание комментария
+                  example: Lorem ipsum dolor sit amet.
+      responses:
+        '204':
+          description: Successfully deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '404':
+          description: Not found
+        '500':
+          description: Internal Server Error
+    get:
+      tags:
+        - posts
+      summary: Получить комментарии под постом
+      description: Получить комментарии под постом. Данные отдаются с помощью курсорной пагинации.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: Количество комментариев, которые нужно вернуть за запрос.
+          schema: 
+            type: integer
+            maximum: 100
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Курсор, с которого взять следующую пачку данных. Если не указан, берутся данные из начала списка.
+          schema: 
+            type: integer            
+      responses:
+        '204':
+          description: Successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 8564
+                            name:
+                              type: string
+                              example: Maria
+                            avatarUrl:
+                              type: string
+                              example: https://travelsocialmedia.ru/img1.webm
+                        comment:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            payload:
+                              type: string
+                              example:  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla tincidunt orci quis ante gravida ultrices. Fusce suscipit mattis odio, ut. 
+                          
+                  cursor:
+                    type: string
+                    format: uuid
+                    description: Курсор, с которого взять следующую пачку данных
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '404':
+          description: Not found
+        '500':
+          description: Internal Server Error
+  /posts/{id}/comments/{commentId}:                
+    delete:
+      tags:
+        - posts
+      summary: Удалить комментарий под постом
+      description: Удалить комментарий под постом
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer   
+        - name: commentId
+          in: path
+          required: true
+          description: Идентификатор комментария в посте
+          schema: 
+            type: integer 
+      responses:
+        '204':
+          description: Successfully created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Access Denied
+        '404':
+          description: Not found
+        '500':
+          description: Internal Server Error
+components:
+  schemas:
+    Post:
+      required:
+        - name
+        - photos
+      type: object
+      properties:
+        description:
+          type: string
+          example: Some description
+          minLength: 3
+          maxLength: 2000
+        photos:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: object
+            properties:
+              payload:
+                type: string
+                format: byte
+                example: Some description
+                minLength: 3
+                maxLength: 3000000
+        status:
+          type: string
+          description: pet status in the store
+          enum:
+            - available
+            - pending
+            - sold
+      xml:
+        name: pet
+  requestBodies:
+    Pet:
+      description: Pet object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Post'
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
