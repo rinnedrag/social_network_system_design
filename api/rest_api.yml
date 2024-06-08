@@ -4,6 +4,8 @@ info:
   description: |-
     Ниже представлены методы по управлению профилями пользователей, их подписками и постами.
 
+    В целях защиты от DDOS на каждого пользователя наложено ограничение на 100 запросов в минут. Если лимит будет превышен, вернётся статус код 429.
+    
     Чат работает с помощью websocket, поэтому описание доки по интеграции находится рядом в файле async_api.yml.
     
   license:
@@ -19,9 +21,108 @@ tags:
     description: Управление постами
   - name: subscriptions
     description: Управление подписками
+  - name: chats
+    description: Управление чатами
   - name: profiles
     description: Управление профилем
 paths:
+  /chats:
+    get:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - chats
+      summary: Получить чаты, в которых состоит пользователь
+      description: Получить чаты, в которых состоит пользователь. Само же общение в чате происходит уже по протоколу wss, описание которого находится в доке async_api.yml
+      responses:
+        '200':
+          description: Получен список чатов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '#/components/schemas/User'
+                        id:
+                          type: integer
+                          description: Идентификатор чата
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - chats
+      summary: Создать чат с пользователем
+      description: Создать чат с пользователем
+      requestBody:
+        content:
+          application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    description: Идентификатор пользователя, с которым надо создать чат
+      responses:
+        '201':
+          description: Успешно создан
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов  
+        '500':
+          description: Внутренняя ошибка сервера
+  /chats/{id}:
+    delete:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - chats
+      summary: Удалить чат с пользователем
+      description: Удалить чат с пользователем
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Идентификатор чата
+          schema: 
+            type: integer
+      responses:
+        '201':
+          description: Успешно удалён
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
   /profiles/me/info:
     put:
       security:
@@ -57,6 +158,8 @@ paths:
           description: Не авторизован
         '403':
           description: Доступ запрещён
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /profiles/me/avatar: 
@@ -89,6 +192,8 @@ paths:
           description: Не авторизован
         '403':
           description: Доступ запрещён
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /profiles/{userId}:
@@ -136,6 +241,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /subscriptions/{userId}:
@@ -173,6 +280,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
     post:
@@ -200,6 +309,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
     delete:
@@ -227,6 +338,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /feed:
@@ -280,6 +393,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /profile/{userId}/posts:
@@ -339,6 +454,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /posts:
@@ -410,6 +527,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
     post:
@@ -475,6 +594,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /posts/{id}:
@@ -503,6 +624,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
     get:
@@ -539,6 +662,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера  
   /posts/{id}/like:
@@ -567,6 +692,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
     delete:
@@ -594,6 +721,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /posts/{id}/comments:
@@ -634,6 +763,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
     get:
@@ -709,6 +840,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
   /posts/{id}/comments/{commentId}:                
@@ -743,6 +876,8 @@ paths:
           description: Доступ запрещён
         '404':
           description: Не найдено
+        '429':
+          description: Превышен лимит запросов
         '500':
           description: Внутренняя ошибка сервера
 components:
