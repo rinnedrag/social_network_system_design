@@ -1,0 +1,928 @@
+openapi: 3.0.3
+info:
+  title: API социальной сети для путешественников
+  description: |-
+    Ниже представлены методы по управлению профилями пользователей, их подписками и постами.
+
+    В целях защиты от DDOS на каждого пользователя наложено ограничение на 100 запросов в минут. Если лимит будет превышен, вернётся статус код 429.
+    
+    Чат работает с помощью websocket, поэтому описание доки по интеграции находится рядом в файле async_api.yml.
+    
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: https://travelsocialmedia.ru/api/v1
+security:
+  - HeaderApiKey: []
+tags:
+  - name: posts
+    description: Управление постами
+  - name: subscriptions
+    description: Управление подписками
+  - name: chats
+    description: Управление чатами
+  - name: profiles
+    description: Управление профилем
+paths:
+  /chats:
+    get:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - chats
+      summary: Получить чаты, в которых состоит пользователь
+      description: Получить чаты, в которых состоит пользователь. Само же общение в чате происходит уже по протоколу wss, описание которого находится в доке async_api.yml
+      responses:
+        '200':
+          description: Получен список чатов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '#/components/schemas/User'
+                        id:
+                          type: integer
+                          description: Идентификатор чата
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - chats
+      summary: Создать чат с пользователем
+      description: Создать чат с пользователем
+      requestBody:
+        content:
+          application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    description: Идентификатор пользователя, с которым надо создать чат
+      responses:
+        '201':
+          description: Успешно создан
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов  
+        '500':
+          description: Внутренняя ошибка сервера
+  /chats/{id}:
+    delete:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - chats
+      summary: Удалить чат с пользователем
+      description: Удалить чат с пользователем
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Идентификатор чата
+          schema: 
+            type: integer
+      responses:
+        '201':
+          description: Успешно удалён
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /profiles/me/info:
+    put:
+      security:
+        - HeaderApiKey: []
+      tags:
+        - profiles
+      summary: Обновить профиль
+      description: Обновить профиль
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  description: Имя профиля
+                  example: Best traveller ever
+                description:
+                  type: string
+                  minLength: 3
+                  maxLength: 2000
+                  description: Описание профиля
+                  example: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas orci.
+      responses:
+        '204':
+          description: Профиль успешно обновлён
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /profiles/me/avatar: 
+    put:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - profiles
+      summary: Обновить аватар профиля
+      description: Обновить аватар профиля
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - photo
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: Фотография
+                  maxLength: 500000
+      responses:
+        '204':
+          description: Профиль успешно обновлён
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /profiles/{userId}:
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - profiles
+      summary: Открыть профиль пользователя
+      description: Открыть профиль пользователя
+      parameters:
+        - name: userId
+          required: true
+          in: path
+          description: Идентификатор пользователя
+          schema: 
+            type: integer
+      responses:
+        '200':
+          description: Получен профиль пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'  
+                  followersCnt:
+                    type: integer
+                    description: Количество пользователей, подписанных на данный профиль
+                    example: 1000000
+                  subscriptionsCnt:
+                    type: integer
+                    description: Количество пользователей, на которых подписан данный профиль
+                    example: 1
+                  description:
+                    type: string
+                    description: Описание профиля
+                    example: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas orci.
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /subscriptions/{userId}:
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - subscriptions
+      summary: Получить список подписок пользователя
+      description: Получить список подписок пользователя
+      parameters:
+        - name: userId
+          required: true
+          in: path
+          description: Идентификатор пользователя
+          schema: 
+            type: integer
+      responses:
+        '200':
+          description: Получен список подписок пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'  
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - subscriptions
+      summary: Подписаться на пользователя
+      description: Подписаться на пользователя
+      parameters:
+        - name: userId
+          required: true
+          in: path
+          description: Идентификатор пользователя
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Успешно подписан
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - subscriptions
+      summary: Отписаться от пользователя
+      description: Отписаться от пользователя
+      parameters:
+        - name: userId
+          required: true
+          in: path
+          description: Идентификатор пользователя
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Успешно отписан
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /feed:
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Получить ленту новостей
+      description: Получить ленту новостей. От новых к старым.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Количество постов, которые нужно вернуть за запрос.
+          schema: 
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Курсор, с которого взять следующую пачку данных. Если не указан, берутся данные из начала списка.
+          schema: 
+            type: integer  
+      responses:
+        '200':
+          description: Получена лента новостей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '#/components/schemas/User'
+                        post:
+                          $ref: '#/components/schemas/Post'
+                  cursor:
+                    type: string
+                    format: uuid
+                    description: Курсор, с которого взять следующую пачку данных
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /profile/{userId}/posts:
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Получить посты в профиле пользователя
+      description: Получить посты в профиле пользователя. От новых к старым.
+      parameters:
+        - name: userId
+          required: true
+          in: path
+          description: Идентификатор пользователя
+          schema: 
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: Количество постов, которые нужно вернуть за запрос.
+          schema: 
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Курсор, с которого взять следующую пачку данных. Если не указан, берутся данные из начала списка.
+          schema: 
+            type: integer  
+      responses:
+        '200':
+          description: Получен список постов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        post:
+                          $ref: '#/components/schemas/Post'
+                  cursor:
+                    type: string
+                    format: uuid
+                    description: Курсор, с которого взять следующую пачку данных
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /posts:
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Найти посты в заданной локации
+      description: Найти посты в заданной локации. Обязательный параметр "Страна". Для уточнения локации также можно указать "Город". Посты выводятся в отсортированном по популярности убывающем порядке.
+      parameters:
+        - name: country
+          in: query
+          required: true
+          description: Страна
+          schema: 
+            type: string
+            maximum: 100
+            example: Тайланд
+        - name: town
+          in: query
+          required: false
+          description: Город
+          schema: 
+            type: string
+            maximum: 100 
+            example: Бангкок
+        - name: limit
+          in: query
+          required: false
+          description: Количество комментариев, которые нужно вернуть за запрос.
+          schema: 
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Курсор, с которого взять следующую пачку данных. Если не указан, берутся данные из начала списка.
+          schema: 
+            type: integer  
+      responses:
+        '200':
+          description: Получен список постов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '#/components/schemas/User'
+                        post:
+                          $ref: '#/components/schemas/Post'
+                  cursor:
+                    type: string
+                    format: uuid
+                    description: Курсор, с которого взять следующую пачку данных
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Опубликовать новый пост
+      description: Опубликовать новый пост
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - description
+              - files
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: Описание поста
+                  minLength: 3
+                  maxLength: 2000
+                location:
+                  type: object
+                  description: Геометка
+                  nullable: true
+                  properties:
+                    lat:
+                      type: number
+                      format: float
+                      description: Широта
+                      example: 10.12
+                    lon:
+                      type: number
+                      format: float
+                      description: Долгота
+                      example: 10.12                      
+                files:
+                  type: array
+                  description: Фотографии
+                  minItems: 1
+                  maxItems: 10
+                  items:
+                    type: object
+                    properties:
+                      order:
+                        type: integer
+                        description: Порядковый номер фотографии
+                      payload:  
+                        type: string
+                        description: Загружаемая фотография в base64
+                        format: binary
+                        maxLength: 3000000
+      responses:
+        '201':
+          description: Успешно создан
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /posts/{id}:
+    delete:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Удалить пост
+      description: Удалить пост
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Успешно удалён
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Получить пост
+      description: Получить пост
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      responses:
+        '200':
+          description: Получен пост
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  post:
+                    $ref: '#/components/schemas/Post'
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера  
+  /posts/{id}/like:
+    post:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Поставить посту отметку "Нравится"
+      description: Поставить посту отметку "Нравится"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Успешно поставлена отметка "Нравится"
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Снять с поста отметку "Нравится"
+      description: Снять с поста отметку "Нравится"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      responses:
+        '204':
+          description: Успешно снята отметка "Нравится"
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /posts/{id}/comments:
+    post:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Создать комментарий под постом
+      description: Создать комментарий под постом
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  minLength: 3
+                  maxLength: 2000
+                  description: Содержание комментария
+                  example: Lorem ipsum dolor sit amet.
+      responses:
+        '204':
+          description: Успешно создан
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+    get:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Получить комментарии под постом
+      description: Получить комментарии под постом. Данные отдаются с помощью курсорной пагинации.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: Количество комментариев, которые нужно вернуть за запрос.
+          schema: 
+            type: integer
+            maximum: 100
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Курсор, с которого взять следующую пачку данных. Если не указан, берутся данные из начала списка.
+          schema: 
+            type: integer            
+      responses:
+        '204':
+          description: Получени список комментариев
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 8564
+                            name:
+                              type: string
+                              example: Maria
+                            avatarUrl:
+                              type: string
+                              example: https://travelsocialmedia.ru/img1.webm
+                        comment:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            payload:
+                              type: string
+                              example:  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla tincidunt orci quis ante gravida ultrices. Fusce suscipit mattis odio, ut. 
+                          
+                  cursor:
+                    type: string
+                    format: uuid
+                    description: Курсор, с которого взять следующую пачку данных
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+  /posts/{id}/comments/{commentId}:                
+    delete:
+      security:
+        - HeaderApiKey: [] 
+      tags:
+        - posts
+      summary: Удалить комментарий под постом
+      description: Удалить комментарий под постом
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поста
+          schema: 
+            type: integer   
+        - name: commentId
+          in: path
+          required: true
+          description: Идентификатор комментария в посте
+          schema: 
+            type: integer 
+      responses:
+        '204':
+          description: Успешно удалён
+        '400':
+          description: Переданы некорректные данные
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещён
+        '404':
+          description: Не найдено
+        '429':
+          description: Превышен лимит запросов
+        '500':
+          description: Внутренняя ошибка сервера
+components:
+  securitySchemes:
+    HeaderApiKey:
+      type: apiKey
+      name: Authorization
+      in: header
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор пользователя
+          example: 8564
+        name:
+          type: string
+          description: Имя пользователя
+          example: Maria
+        avatarUrl:
+          type: string
+          description: Ссылка на аватар пользователя
+          example: https://travelsocialmedia.ru/img1.webm
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: Идентификатор поста
+        description:
+          type: string
+          example:  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla tincidunt orci quis ante gravida ultrices. Fusce suscipit mattis odio, ut.
+          description: Описание поста
+        photoUrls:
+          type: array
+          items:
+            type: string
+            example: https://travelsocialmedia.ru/img1.webm
+            description: Отсортированный массив ссылок на фотографии, прикреплённые к посту. Подгружается фронтом.
+        likeCnt:
+          type: integer
+          example: 10
+          description: Общее количество отметок "Нравится". С учётом пользовательского, если имеется.
+        likedByUser:
+          type: boolean
+          description: Флаг, чтобы сообщить пользователю, что он выставил или нет отметку "Нравится" посту.
